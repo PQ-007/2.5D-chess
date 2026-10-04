@@ -1,0 +1,29 @@
+{
+  "name": "2.5d-chess",
+  "version": "1.0.0",
+  "description": "Online multiplayer 2.5D isometric chess",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PQ-007/2.5D-chess.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PQ-007/2.5D-chess/issues"
+  },
+  "homepage": "https://github.com/PQ-007/2.5D-chess#readme",
+  "dependencies": {
+    "chess.js": "^1.4.0",
+    "express": "^5.2.1",
+    "socket.io": "^4.8.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

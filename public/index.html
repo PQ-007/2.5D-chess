@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2.5D Chess</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="lobby" class="panel">
+    <h1>2.5D Chess</h1>
+    <label>Your name <input id="name" maxlength="20" placeholder="Player"></label>
+    <div class="row">
+      <select id="color">
+        <option value="w">Play white</option>
+        <option value="b">Play black</option>
+        <option value="random">Random color</option>
+      </select>
+      <button id="create">Create game</button>
+    </div>
+    <div class="divider">or join with a code</div>
+    <div class="row">
+      <input id="code" maxlength="5" placeholder="ABCDE" autocomplete="off">
+      <button id="join">Join</button>
+    </div>
+    <p id="lobby-error" class="error"></p>
+  </section>
+
+  <main id="game" hidden>
+    <div id="board-wrap"><canvas id="board"></canvas></div>
+    <aside class="panel">
+      <div class="room">Room <strong id="room-code"></strong> <button id="copy-link" class="small">Copy invite link</button></div>
+      <div class="player" id="player-top"></div>
+      <div id="status"></div>
+      <div class="player" id="player-bottom"></div>
+      <div class="row buttons">
+        <button id="flip" class="small">Flip board</button>
+        <button id="draw" class="small">Offer draw</button>
+        <button id="resign" class="small danger">Resign</button>
+        <button id="rematch" class="small" hidden>Rematch</button>
+      </div>
+      <ol id="moves"></ol>
+      <div id="chat-log"></div>
+      <form id="chat-form"><input id="chat-input" maxlength="200" placeholder="Say something…" autocomplete="off"></form>
+    </aside>
+  </main>
+
+  <div id="promo" hidden>
+    <div class="panel">
+      <p>Promote to</p>
+      <div class="row" id="promo-choices"></div>
+    </div>
+  </div>
+
+  <div id="toast" hidden></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

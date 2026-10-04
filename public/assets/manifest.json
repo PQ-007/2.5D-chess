@@ -1,0 +1,19 @@
+{
+  "projection": "iso",
+  "tileWidth": 64,
+  "tileHeight": 32,
+  "tileThickness": 8,
+  "tileOffset": { "x": 0, "y": 0 },
+  "pieceAnchor": { "x": 0.5, "y": 0.9 },
+  "pieceOffset": { "x": 0, "y": 0 },
+  "pieceHeadroom": 72,
+  "pixelArt": true,
+  "tiles": {
+    "light": "",
+    "dark": ""
+  },
+  "pieces": {
+    "wK": "", "wQ": "", "wR": "", "wB": "", "wN": "", "wP": "",
+    "bK": "", "bQ": "", "bR": "", "bB": "", "bN": "", "bP": ""
+  }
+}
