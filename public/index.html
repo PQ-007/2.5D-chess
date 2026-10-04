@@ -2,9 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>3D Chess</title>
-  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <title>Chess</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%E2%99%9F%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script type="importmap">
     {
@@ -15,54 +19,118 @@
     }
   </script>
 </head>
-<body>
-  <section id="lobby" class="panel">
-    <h1>3D Chess</h1>
-    <p id="loading">Loading chess set…</p>
-    <label>Your name <input id="name" maxlength="20" placeholder="Player"></label>
-    <div class="row">
-      <select id="color">
-        <option value="w">Play white</option>
-        <option value="b">Play black</option>
-        <option value="random">Random color</option>
-      </select>
-      <button id="create">Create game</button>
+<body class="in-lobby">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></symbol>
+    <symbol id="i-flip" viewBox="0 0 24 24"><path d="M4 9h13l-3-3M20 15H7l3 3"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
+    <symbol id="i-half" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v16"/></symbol>
+    <symbol id="i-exit" viewBox="0 0 24 24"><path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10"/></symbol>
+  </svg>
+
+  <div id="stage">
+    <canvas id="board"></canvas>
+    <div class="hint" id="hint" hidden>Drag to orbit · scroll to zoom</div>
+  </div>
+
+  <!-- Lobby -->
+  <section id="lobby" class="card">
+    <h1>Chess</h1>
+    <p class="sub">Play a friend, in three dimensions.</p>
+
+    <input id="name" class="field" maxlength="20" placeholder="Your name" autocomplete="nickname">
+
+    <div class="seg" id="color" role="radiogroup" aria-label="Play as">
+      <button type="button" data-v="w" role="radio"><span class="disc w"></span>White</button>
+      <button type="button" data-v="random" role="radio" class="on"><span class="disc r"></span>Random</button>
+      <button type="button" data-v="b" role="radio"><span class="disc b"></span>Black</button>
     </div>
-    <div class="divider">or join with a code</div>
-    <div class="row">
-      <input id="code" maxlength="5" placeholder="ABCDE" autocomplete="off">
-      <button id="join">Join</button>
-    </div>
-    <p id="lobby-error" class="error"></p>
+
+    <button id="create" class="btn primary">Create game</button>
+
+    <div class="or"><span>or join</span></div>
+
+    <form id="join-form" class="join">
+      <input id="code" class="field mono" maxlength="5" placeholder="Room code" autocomplete="off" spellcheck="false">
+      <button id="join" class="btn">Join</button>
+    </form>
+
+    <p id="lobby-error" class="error" aria-live="polite"></p>
+    <p id="loading" class="loading">Loading pieces…</p>
   </section>
 
-  <main id="game" hidden>
-    <div id="board-wrap"><canvas id="board"></canvas><div class="hint">Drag to rotate · scroll to zoom</div></div>
-    <aside class="panel">
-      <div class="room">Room <strong id="room-code"></strong> <button id="copy-link" class="small">Copy invite link</button></div>
-      <div class="player" id="player-top"></div>
-      <div id="status"></div>
-      <div class="player" id="player-bottom"></div>
-      <div class="row buttons">
-        <button id="flip" class="small">Flip board</button>
-        <button id="draw" class="small">Offer draw</button>
-        <button id="resign" class="small danger">Resign</button>
-        <button id="rematch" class="small" hidden>Rematch</button>
-      </div>
-      <ol id="moves"></ol>
-      <div id="chat-log"></div>
-      <form id="chat-form"><input id="chat-input" maxlength="200" placeholder="Say something…" autocomplete="off"></form>
-    </aside>
-  </main>
+  <!-- Game -->
+  <header id="topbar" hidden>
+    <button id="leave" class="icon" title="Leave game" aria-label="Leave game"><svg><use href="#i-exit"/></svg></button>
+    <div id="status" class="pill"></div>
+    <button id="room" class="chip" title="Copy invite link"><span id="room-code"></span><svg><use href="#i-link"/></svg></button>
+  </header>
 
-  <div id="promo" hidden>
-    <div class="panel">
-      <p>Promote to</p>
-      <div class="row" id="promo-choices"></div>
+  <aside id="panel" class="card" hidden>
+    <div class="player" id="player-top"></div>
+
+    <div class="tabs" role="tablist">
+      <button class="on" data-tab="moves" role="tab">Moves</button>
+      <button data-tab="chat" role="tab">Chat <span id="chat-badge" hidden></span></button>
+    </div>
+
+    <div class="tab-body" id="tab-moves">
+      <ol id="moves"></ol>
+      <p class="empty" id="moves-empty">No moves yet</p>
+    </div>
+    <div class="tab-body" id="tab-chat" hidden>
+      <div id="chat-log"></div>
+      <form id="chat-form"><input id="chat-input" class="field" maxlength="200" placeholder="Message" autocomplete="off"></form>
+    </div>
+
+    <div id="offer" class="offer" hidden>
+      <span>Draw offered</span>
+      <button id="decline-draw" class="btn small ghost">Decline</button>
+      <button id="accept-draw" class="btn small">Accept</button>
+    </div>
+
+    <div class="player" id="player-bottom"></div>
+
+    <div class="actions">
+      <button id="flip" class="icon" title="Flip board" aria-label="Flip board"><svg><use href="#i-flip"/></svg></button>
+      <button id="draw" class="icon" title="Offer draw" aria-label="Offer draw"><svg><use href="#i-half"/></svg></button>
+      <button id="resign" class="icon" title="Resign" aria-label="Resign"><svg><use href="#i-flag"/></svg><span class="confirm">Resign?</span></button>
+    </div>
+  </aside>
+
+  <!-- Overlays -->
+  <div id="invite" class="overlay soft" hidden>
+    <div class="card small-card">
+      <p class="eyebrow">Waiting for an opponent</p>
+      <div class="code" id="invite-code"></div>
+      <p class="sub">Share this link to start playing</p>
+      <div class="join">
+        <input id="invite-link" class="field mono" readonly>
+        <button id="copy-invite" class="btn primary">Copy</button>
+      </div>
     </div>
   </div>
 
-  <div id="toast" hidden></div>
+  <div id="result" class="overlay soft" hidden>
+    <div class="card small-card">
+      <p class="eyebrow" id="result-reason"></p>
+      <h2 id="result-title"></h2>
+      <div class="row">
+        <button id="new-game" class="btn ghost">New game</button>
+        <button id="rematch" class="btn primary">Rematch</button>
+      </div>
+      <button id="result-close" class="link">View board</button>
+    </div>
+  </div>
+
+  <div id="promo" class="overlay" hidden>
+    <div class="card small-card">
+      <p class="eyebrow">Promote to</p>
+      <div class="promo-row" id="promo-choices"></div>
+    </div>
+  </div>
+
+  <div id="toast" role="status" hidden></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script type="module" src="js/main.js"></script>

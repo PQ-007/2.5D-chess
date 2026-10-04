@@ -11,6 +11,7 @@ and anyone after that watches.
 - Resign, draw offers, rematch (colors swap), spectators, chat
 - Orbit (drag) and zoom (scroll / pinch) the camera; pieces slide, knights hop, captures fade
 - Legal-move dots, last-move / check / selection highlights, real-time shadows
+- Minimal monochrome UI with light and dark themes; works on phones
 
 ## Run it
 

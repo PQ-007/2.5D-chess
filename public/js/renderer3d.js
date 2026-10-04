@@ -9,12 +9,11 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 const SQ = 2.5; // square size in model units (board is 20 x 20)
 const PIECE_KEYS = ['wK', 'wQ', 'wR', 'wB', 'wN', 'wP', 'bK', 'bQ', 'bR', 'bB', 'bN', 'bP'];
 const COLORS = {
-  background: 0x1d1b26,
-  selected: 0xffc94d,
-  lastMove: 0x6fb8ff,
-  check: 0xff4040,
-  target: 0x8cf08c,
-  hover: 0xffffff,
+  selected: 0xf2c46d,
+  lastMove: 0xe9d38f,
+  check: 0xef4444,
+  target: 0x18181b,
+  hover: 0x000000,
 };
 
 export function squareToXZ(square) {
@@ -35,17 +34,22 @@ export async function loadChessSet(url = 'models/chess_set.glb', onProgress) {
   const set = { board: gltf.scene.getObjectByName('Board'), pieces: {} };
   for (const key of PIECE_KEYS) set.pieces[key] = gltf.scene.getObjectByName(key);
   set.board.traverse((o) => { if (o.isMesh) o.receiveShadow = true; });
-  for (const p of Object.values(set.pieces)) {
-    p.position.set(0, 0, 0);
-    p.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-    // Invisible cylinder used for clicking: easier to hit than the sculpted mesh.
-    const size = new THREE.Box3().setFromObject(p).getSize(new THREE.Vector3());
+  for (const key of PIECE_KEYS) {
+    const model = set.pieces[key];
+    model.position.set(0, 0, 0);
+    model.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    // Wrap the (scaled, sometimes rotated) model in a plain group: the group turns to
+    // face the camera and holds an invisible cylinder that is easier to click than the
+    // sculpted mesh.
+    const size = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3());
     const hit = new THREE.Mesh(
       new THREE.CylinderGeometry(SQ * 0.38, SQ * 0.38, size.y, 12).translate(0, size.y / 2, 0),
       new THREE.MeshBasicMaterial({ visible: false }),
     );
     hit.name = 'hitbox';
-    p.add(hit);
+    const group = new THREE.Group();
+    group.add(model, hit);
+    set.pieces[key] = group;
   }
   return set;
 }
@@ -62,14 +66,13 @@ export class BoardRenderer {
     this.hover = null;
     this.flipped = false;
 
-    const r = (this.gl = new THREE.WebGLRenderer({ canvas, antialias: true }));
+    const r = (this.gl = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true }));
     r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     r.shadowMap.enabled = true;
     r.shadowMap.type = THREE.PCFSoftShadowMap;
     r.toneMapping = THREE.ACESFilmicToneMapping;
 
     const scene = (this.scene = new THREE.Scene());
-    scene.background = new THREE.Color(COLORS.background);
     const pmrem = new THREE.PMREMGenerator(r);
     scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     scene.environmentIntensity = 0.6;
@@ -92,7 +95,7 @@ export class BoardRenderer {
     this.controls = new OrbitControls(this.camera, canvas);
     Object.assign(this.controls, {
       enablePan: false, enableDamping: true, minDistance: 18, maxDistance: 60,
-      minPolarAngle: 0.05, maxPolarAngle: 1.3,
+      minPolarAngle: 0.05, maxPolarAngle: 1.3, autoRotateSpeed: 0.6,
     });
     this._placeCamera(false);
 
@@ -131,7 +134,6 @@ export class BoardRenderer {
     let da = a1 - a0;
     while (da > Math.PI) da -= 2 * Math.PI;
     while (da < -Math.PI) da += 2 * Math.PI;
-    if (Math.abs(da) < 1e-3) da = Math.PI; // flipping while already there: go round
     const r0 = Math.hypot(from.x, from.z), r1 = Math.hypot(to.x, to.z);
     this.anims.push({
       camera: true, start: performance.now(), dur: 700,
@@ -140,6 +142,17 @@ export class BoardRenderer {
         this.camera.position.set(Math.sin(a) * rr, from.y + (to.y - from.y) * e, Math.cos(a) * rr);
       },
     });
+  }
+
+  // Slowly circle the board (lobby backdrop).
+  set idle(on) {
+    this.controls.autoRotate = on;
+    this.controls.enabled = !on;
+  }
+
+  // Swing the camera back behind the current player's pieces.
+  resetView() {
+    this._placeCamera(true);
   }
 
   resize() {
@@ -203,7 +216,7 @@ export class BoardRenderer {
     const yaw = Math.atan2(this.camera.position.x, this.camera.position.z);
     if (yaw !== this.yaw) {
       this.yaw = yaw;
-      for (const o of this.pieceGroup.children) o.rotation.y = o.userData.baseYaw + yaw;
+      for (const o of this.pieceGroup.children) o.rotation.y = yaw;
       this.dirty = true;
     }
     if (!this.dirty) return;
@@ -217,8 +230,7 @@ export class BoardRenderer {
     const { x, z } = squareToXZ(p.square);
     obj.position.set(x, this.boardTop, z);
     obj.userData.square = p.square;
-    obj.userData.baseYaw = obj.rotation.y;
-    obj.rotation.y = obj.userData.baseYaw + this.yaw;
+    obj.rotation.y = this.yaw;
     this.pieceGroup.add(obj);
     this.meshes.set(p.square, obj);
     return obj;
@@ -308,15 +320,15 @@ export class BoardRenderer {
   _rebuildMarks() {
     this.markGroup.clear();
     if (this.lastMove) {
-      this._mark(this.lastMove.from, this._squareGeo, COLORS.lastMove, 0.28);
-      this._mark(this.lastMove.to, this._squareGeo, COLORS.lastMove, 0.28);
+      this._mark(this.lastMove.from, this._squareGeo, COLORS.lastMove, 0.32);
+      this._mark(this.lastMove.to, this._squareGeo, COLORS.lastMove, 0.32);
     }
-    if (this.checkSquare) this._mark(this.checkSquare, this._squareGeo, COLORS.check, 0.55);
+    if (this.checkSquare) this._mark(this.checkSquare, this._squareGeo, COLORS.check, 0.5);
     if (this.selected) this._mark(this.selected, this._squareGeo, COLORS.selected, 0.5, 0.012);
-    if (this.hover && this.hover !== this.selected) this._mark(this.hover, this._squareGeo, COLORS.hover, 0.12, 0.012);
+    if (this.hover && this.hover !== this.selected) this._mark(this.hover, this._squareGeo, COLORS.hover, 0.07, 0.012);
     for (const t of this.targets) {
       const occupied = this.meshes.has(t);
-      this._mark(t, occupied ? this._ringGeo : this._dotGeo, COLORS.target, occupied ? 0.85 : 0.75, 0.015);
+      this._mark(t, occupied ? this._ringGeo : this._dotGeo, COLORS.target, occupied ? 0.4 : 0.32, 0.015);
     }
   }
 }
