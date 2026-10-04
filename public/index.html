@@ -3,13 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>2.5D Chess</title>
+  <title>3D Chess</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "/vendor/three/build/three.module.js",
+        "three/addons/": "/vendor/three/examples/jsm/"
+      }
+    }
+  </script>
 </head>
 <body>
   <section id="lobby" class="panel">
-    <h1>2.5D Chess</h1>
+    <h1>3D Chess</h1>
+    <p id="loading">Loading chess set…</p>
     <label>Your name <input id="name" maxlength="20" placeholder="Player"></label>
     <div class="row">
       <select id="color">
@@ -28,7 +37,7 @@
   </section>
 
   <main id="game" hidden>
-    <div id="board-wrap"><canvas id="board"></canvas></div>
+    <div id="board-wrap"><canvas id="board"></canvas><div class="hint">Drag to rotate · scroll to zoom</div></div>
     <aside class="panel">
       <div class="room">Room <strong id="room-code"></strong> <button id="copy-link" class="small">Copy invite link</button></div>
       <div class="player" id="player-top"></div>

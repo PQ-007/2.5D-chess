@@ -1,5 +1,5 @@
-import { Chess } from '/vendor/chess.js';
-import { BoardRenderer, loadAssets } from './renderer.js';
+import { Chess } from '/vendor/chess/chess.js';
+import { BoardRenderer, loadChessSet } from './renderer3d.js';
 
 const $ = (id) => document.getElementById(id);
 const socket = io();
@@ -15,6 +15,7 @@ let state = null;
 let chess = new Chess();
 
 $('name').value = store.get('chess25d:name') || '';
+$('create').disabled = $('join').disabled = true; // until the 3D models are loaded
 const urlCode = new URLSearchParams(location.search).get('room');
 if (urlCode) $('code').value = urlCode.toUpperCase();
 
@@ -64,10 +65,6 @@ socket.on('state', (s) => {
   const prev = state;
   state = s;
   chess = new Chess(s.fen);
-  if (s.lastMove && prev && prev.fen !== s.fen && s.history.length === prev.history.length + 1) {
-    const piece = chess.get(s.lastMove.to);
-    renderer.animateMove({ ...piece, square: s.lastMove.to }, s.lastMove.from, s.lastMove.to);
-  }
   renderer.board = chess.board();
   renderer.lastMove = s.lastMove;
   renderer.checkSquare = s.inCheck ? findKing(s.turn) : null;
@@ -218,12 +215,20 @@ $('chat-form').onsubmit = (e) => {
 
 // --- Boot --------------------------------------------------------------------
 
-const cfg = await loadAssets();
-renderer = new BoardRenderer($('board'), cfg);
+const set = await loadChessSet('models/chess_set.glb', (f) => { $('loading').textContent = `Loading chess set… ${Math.round(f * 100)}%`; });
+$('loading').hidden = true;
+$('create').disabled = $('join').disabled = false;
+renderer = new BoardRenderer($('board'), set);
 renderer.board = chess.board();
 window.__r = renderer; // handy for debugging / automated tests
 const canvas = $('board');
-canvas.addEventListener('pointerdown', onBoardClick);
+// Dragging orbits the camera; only a short tap/click selects a square.
+let down = null;
+canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener('pointerup', (e) => {
+  if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6) onBoardClick(e);
+  down = null;
+});
 canvas.addEventListener('pointermove', (e) => { renderer.hover = canMove() ? renderer.pick(e) : null; });
 canvas.addEventListener('pointerleave', () => { renderer.hover = null; });
 new ResizeObserver(() => renderer.resize()).observe($('board-wrap'));

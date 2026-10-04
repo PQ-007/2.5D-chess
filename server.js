@@ -8,7 +8,8 @@ const PORT = process.env.PORT || 3000;
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/vendor', express.static(path.join(__dirname, 'node_modules/chess.js/dist/esm')));
+app.use('/vendor/chess', express.static(path.join(__dirname, 'node_modules/chess.js/dist/esm')));
+app.use('/vendor/three', express.static(path.join(__dirname, 'node_modules/three')));
 app.get('/healthz', (_req, res) => res.send('ok'));
 
 const server = http.createServer(app);
@@ -82,4 +83,4 @@ io.on('connection', (socket) => {
 
 setInterval(() => rooms.sweep(), 10 * 60 * 1000).unref();
 
-server.listen(PORT, () => console.log(`2.5D chess running on http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`3D chess running on http://localhost:${PORT}`));

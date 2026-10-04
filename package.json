@@ -1,7 +1,7 @@
 {
   "name": "2.5d-chess",
   "version": "1.0.0",
-  "description": "Online multiplayer 2.5D isometric chess",
+  "description": "Online multiplayer 3D chess (Three.js) with the Polyfjord chess set",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -21,7 +21,8 @@
   "dependencies": {
     "chess.js": "^1.4.0",
     "express": "^5.2.1",
-    "socket.io": "^4.8.4"
+    "socket.io": "^4.8.4",
+    "three": "^0.186.1"
   },
   "engines": {
     "node": ">=18"

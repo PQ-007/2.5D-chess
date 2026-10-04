@@ -38,8 +38,10 @@ button.danger { background: var(--danger); color: #fff; }
 #code { text-transform: uppercase; letter-spacing: 3px; }
 
 #game { display: flex; gap: 16px; width: 100vw; height: 100vh; padding: 16px; }
-#board-wrap { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; }
-#board { image-rendering: pixelated; touch-action: none; }
+#board-wrap { flex: 1; min-width: 0; position: relative; border-radius: 10px; overflow: hidden; }
+#board { display: block; width: 100%; height: 100%; touch-action: none; cursor: pointer; }
+.hint { position: absolute; left: 12px; bottom: 10px; color: var(--muted); font-size: 12px; pointer-events: none; }
+#loading { text-align: center; color: var(--muted); margin: -4px 0 12px; font-size: 13px; }
 #game aside { width: 300px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
 .room { color: var(--muted); }
 .room strong { color: var(--text); letter-spacing: 2px; }
@@ -69,6 +71,6 @@ button.danger { background: var(--danger); color: #fff; }
 @media (max-width: 760px) {
   body { align-items: flex-start; }
   #game { flex-direction: column; height: auto; padding: 16px; }
-  #board-wrap { height: 70vw; min-height: 260px; }
+  #board-wrap { height: 90vw; min-height: 300px; flex: none; }
   #game aside { width: 100%; }
 }
